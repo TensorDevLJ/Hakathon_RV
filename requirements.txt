@@ -6,4 +6,4 @@ PyMuPDF
 transformers
 pydantic
 huggingface_hub
-# torch is handled via requirements-extra.txt
+torch
