@@ -8,7 +8,8 @@ import os
 load_dotenv()
 
 # Hugging Face Q&A model pipeline
-qa_pipeline = pipeline("question-answering", model="distilbert-base-uncased-distilled-squad")
+pipeline("question-answering", model="distilbert-base-cased-distilled-squad")
+
 
 def extract_text_from_pdf(url: str) -> str:
     response = requests.get(url)
