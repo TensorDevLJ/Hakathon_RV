@@ -1,16 +1,23 @@
-# utils.py (Hugging Face version)
 import fitz  # PyMuPDF
 import requests
+import re
 from transformers import pipeline
 from dotenv import load_dotenv
 import os
 
 load_dotenv()
 
-# Hugging Face Q&A model pipeline
-pipeline("question-answering", model="distilbert-base-uncased-distilled-squad")
+# Load QA pipeline (high-quality model)
+#qa_pipeline = pipeline("question-answering", model="deepset/roberta-large-squad2")
+qa_pipeline = pipeline("question-answering", model="distilbert-base-uncased-distilled-squad")
 
 
+# Clean and normalize PDF text
+def clean_text(text: str) -> str:
+    text = re.sub(r"\s+", " ", text)
+    return text.strip()
+
+# Extract PDF text from URL
 def extract_text_from_pdf(url: str) -> str:
     response = requests.get(url)
     if response.status_code != 200:
@@ -20,26 +27,25 @@ def extract_text_from_pdf(url: str) -> str:
     text = ""
     for page in pdf_file:
         text += page.get_text()
+    return clean_text(text)
 
-    # 👇 Add this line to preview the first 1000 characters of extracted PDF text
-    print("\n[DEBUG] Extracted Text (first 1000 characters):\n")
-    print(text[:1000])
-    print("\n[DEBUG] Total characters extracted:", len(text))
-
-    return text
-
-
-
+# Ask Q&A pipeline with context chunking
 def ask_gpt(context: str, question: str) -> str:
-    try:
-        result = qa_pipeline({
-            "question": question,
-            "context": context
-        })
+    max_chunk = 450
+    stride = 50
+    chunks = [context[i:i + max_chunk] for i in range(0, len(context), max_chunk - stride)]
 
-        if result["score"] < 0.2 or result["answer"].strip() == "":
-            return "Not mentioned in the document."
-        return result["answer"]
+    best_answer = ""
+    best_score = 0
 
-    except Exception as e:
-        return f"Error: {str(e)}"
+    for chunk in chunks:
+        try:
+            result = qa_pipeline(question=question, context=chunk)
+    
+            if result["score"] > best_score and result["answer"].strip() != "":
+                best_answer = result["answer"]
+                best_score = result["score"]
+        except Exception as e:
+            continue
+
+    return best_answer if best_answer else "Not mentioned in the document."

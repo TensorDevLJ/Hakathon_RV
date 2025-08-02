@@ -4,6 +4,5 @@ python-dotenv
 requests
 PyMuPDF
 transformers
-pydantic
 huggingface_hub
 torch
