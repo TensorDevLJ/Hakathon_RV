@@ -1,7 +1,9 @@
 fastapi
 uvicorn
-openai
-PyMuPDF
 python-dotenv
-pydantic
 requests
+PyMuPDF
+transformers
+pydantic
+huggingface_hub
+torch
